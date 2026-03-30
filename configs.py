@@ -20,12 +20,12 @@ DATABASE_URL = os.getenv("DATABASE_URL", "") #Mongodb Url
 DATABASE_NAME = os.getenv("DATABASE_NAME", "") # example Cluster0
 
 # TamilMV settings
-TMV_URL = os.getenv("TMV_URL", "https://www.1tamilmv.land/")
-TMV_TORRENT = int(os.getenv("TMV_TORRENT", ""))
-TMV_LEECH_GRP = int(os.getenv("TMV_LEECH_GRP", ""))
-TMV_MIRROR_GRP = int(os.getenv("TMV_MIRROR_GRP", ""))
-TMV_TORRENT_THUMB = os.getenv("TMV_TORRENT_THUMB", "https://i.ibb.co/7dq7mMLp/photo-2025-10-18-16-42-28-7562603128038621216.jpg") #torrant Pic
-BOT_TAG = os.getenv("BOT_TAG", "@SMD_BOTz") # File Prefix
+TMV_URL = os.getenv("TMV_URL", "https://www.1tamilmv.immo/")
+TMV_TORRENT = int(os.getenv("TMV_TORRENT", "-1003807443810"))
+TMV_LEECH_GRP = int(os.getenv("TMV_LEECH_GRP", "-1002744205359"))
+TMV_MIRROR_GRP = int(os.getenv("TMV_MIRROR_GRP", "-1002744205359"))
+TMV_TORRENT_THUMB = os.getenv("TMV_TORRENT_THUMB", "https://i.ibb.co/vCn6v8YD/photo-2026-03-30-09-22-38-7622976671569674256.jpg") #torrant Pic
+BOT_TAG = os.getenv("BOT_TAG", "@ML_FILES") # File Prefix
 
 # Internal
 PING_INTERVAL = int(os.getenv("PING_INTERVAL", "120"))
