@@ -8,6 +8,11 @@ client = motor.motor_asyncio.AsyncIOMotorClient(DATABASE_URL)
 db = client[DATABASE_NAME]
 tmv_collection = db["Tamilmv"]
 
+# FIX 3: Unique index on file_url — prevents duplicate inserts at DB level
+async def init_db():
+    await tmv_collection.create_index("file_url", unique=True)
+    print("✅ DB index ensured on file_url")
+
 # ---------- TamilMV Entry Helper ----------
 async def add_tmv(file_name: str, file_url: str, magnet: str, size_mb: float = 0, category: str = "Movies"):
     """
