@@ -75,7 +75,8 @@ async def send_torrent(user: Client, file_path, category, file_name, file_url, m
     await safe_send(TMV_TORRENT)
     await safe_send(TMV_LEECH_GRP, reply_cmd="/qbleech")
     await safe_send(TMV_MIRROR_GRP, reply_cmd="/qbmirror")
-    await add_tmv(file_name, file_url, magnet, size_mb)
+    # FIX 1: Pass category to add_tmv so it saves correctly
+    await add_tmv(file_name, file_url, magnet, size_mb, category)
 
 # ================= TamilMV Scraper =================
 async def tmv_scraper(user: Client):
@@ -85,7 +86,8 @@ async def tmv_scraper(user: Client):
     try:
         resp = scraper.get(TMV_URL, timeout=30)
         soup = BeautifulSoup(resp.text, "html.parser")
-        topics = [fix_url(a["href"]) for a in soup.find_all("a", href=True) if "topic" in a["href"]][:20]
+        # FIX 2: Reduced from [:40] to [:15] — grabs only newest topics, avoids re-scraping old ones
+        topics = [fix_url(a["href"]) for a in soup.find_all("a", href=True) if "topic" in a["href"]][:15]
         
         for topic_url in topics:
             await asyncio.sleep(random.uniform(2, 4))
@@ -126,3 +128,4 @@ async def tmv_scraper(user: Client):
             except: continue
     except Exception as e:
         print(f"🛑 Error: {e}")
+
