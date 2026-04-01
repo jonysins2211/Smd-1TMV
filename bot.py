@@ -3,6 +3,7 @@ from aiohttp import web
 from pyrogram import Client, idle
 from configs import API_ID, API_HASH, USER_SESSION, PORT, URL, SCRAPE_INTERVAL, PING_INTERVAL
 from tamilmv import tmv_scraper
+from database import init_db
 
 User = Client("User", api_id=API_ID, api_hash=API_HASH, session_string=USER_SESSION)
 
@@ -45,6 +46,8 @@ async def start_bot():
     await User.start()
     user = await User.get_me()
     print(f"✅ User logged in: @{user.username}")
+    # FIX 3: Init DB index on startup
+    await init_db()
     asyncio.create_task(main_loop())
     await start_server()
     await idle()
