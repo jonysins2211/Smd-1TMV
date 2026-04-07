@@ -87,7 +87,7 @@ async def tmv_scraper(user: Client):
         resp = scraper.get(TMV_URL, timeout=30)
         soup = BeautifulSoup(resp.text, "html.parser")
         # FIX 2: Reduced from [:40] to [:15] — grabs only newest topics, avoids re-scraping old ones
-        topics = [fix_url(a["href"]) for a in soup.find_all("a", href=True) if "topic" in a["href"]][:15]
+        topics = [fix_url(a["href"]) for a in soup.find_all("a", href=True) if "topic" in a["href"]][:20]
         
         for topic_url in topics:
             await asyncio.sleep(random.uniform(2, 4))
