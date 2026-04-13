@@ -1,4 +1,3 @@
-import re
 import datetime
 import motor.motor_asyncio
 from configs import DATABASE_URL, DATABASE_NAME
@@ -7,6 +6,7 @@ from configs import DATABASE_URL, DATABASE_NAME
 client = motor.motor_asyncio.AsyncIOMotorClient(DATABASE_URL)
 db = client[DATABASE_NAME]
 tmv_collection = db["Tamilmv"]
+meta_collection = db["meta"]
 
 # ---------- TamilMV Entry Helper ----------
 async def add_tmv(file_name: str, file_url: str, magnet: str, size_mb: float = 0, category: str = "Movies"):
@@ -35,3 +35,21 @@ async def is_tmv_exist(file_url: str):
     """Check if the torrent already processed."""
     result = await tmv_collection.find_one({"file_url": file_url})
     return True if result else False
+
+async def get_last_topic_id() -> int | None:
+    """Read last processed TamilMV topic id from meta collection."""
+    doc = await meta_collection.find_one({"_id": "tmv_last_topic_id"})
+    if not doc:
+        return None
+    try:
+        return int(doc.get("value"))
+    except (TypeError, ValueError):
+        return None
+
+async def set_last_topic_id(topic_id: int):
+    """Persist last processed TamilMV topic id."""
+    await meta_collection.update_one(
+        {"_id": "tmv_last_topic_id"},
+        {"$set": {"value": int(topic_id), "updated_at": datetime.datetime.utcnow()}},
+        upsert=True,
+    )
