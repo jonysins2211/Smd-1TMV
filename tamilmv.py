@@ -4,6 +4,7 @@ import random
 import asyncio
 import requests
 import cloudscraper
+from cloudscraper.exceptions import CloudflareException
 from pyrogram import Client
 from bs4 import BeautifulSoup
 from urllib.parse import unquote, urljoin
@@ -52,7 +53,7 @@ def download_file(scraper, url: str, filename: str) -> bool:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
             return os.path.getsize(filename) > 0
-    except (OSError, requests.RequestException):
+    except (OSError, requests.RequestException, CloudflareException):
         return False
     return False
 
