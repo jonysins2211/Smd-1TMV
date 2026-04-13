@@ -8,7 +8,7 @@ from cloudscraper.exceptions import CloudflareException
 from pyrogram import Client
 from bs4 import BeautifulSoup
 from urllib.parse import unquote, urljoin
-from database import tmv_collection, add_tmv 
+from database import tmv_collection, add_tmv, get_last_topic_id, set_last_topic_id
 from configs import TMV_URL, BOT_TAG, TMV_TORRENT, TMV_LEECH_GRP, TMV_MIRROR_GRP, TMV_TORRENT_THUMB, SIZE_LIMIT_GB
 
 # ================= Thumbnail Setup =================
@@ -33,6 +33,16 @@ def clean_filename(name: str) -> str:
 
 def fix_url(href: str) -> str:
     return href if href.startswith("http") else urljoin(TMV_URL, href)
+
+def extract_topic_id(topic_url: str) -> int | None:
+    """Extract numeric topic id from a TamilMV topic URL."""
+    match = re.search(r"/topic/(\d+)", topic_url)
+    if not match:
+        return None
+    try:
+        return int(match.group(1))
+    except (TypeError, ValueError):
+        return None
 
 def categorize_content(title: str) -> str:
     """Detects if it's a Movie or Web Series based on title."""
@@ -89,8 +99,35 @@ async def tmv_scraper(user: Client):
         resp = scraper.get(TMV_URL, timeout=30)
         soup = BeautifulSoup(resp.text, "html.parser")
         topics = [fix_url(a["href"]) for a in soup.find_all("a", href=True) if "topic" in a["href"]][:30]
-        
+        topics_with_id = []
         for topic_url in topics:
+            topic_id = extract_topic_id(topic_url)
+            if topic_id is not None:
+                topics_with_id.append((topic_id, topic_url))
+
+        if not topics_with_id:
+            print("⚠️ No valid topic ids found.")
+            return
+
+        # Keep newest topic id for checkpoint update.
+        highest_topic_id = max(topic_id for topic_id, _ in topics_with_id)
+        last_topic_id = await get_last_topic_id()
+
+        # First run bootstrap: set checkpoint and skip old backlog.
+        if last_topic_id is None:
+            await set_last_topic_id(highest_topic_id)
+            print(f"🆕 Baseline saved at topic id {highest_topic_id}. Waiting for new posts.")
+            return
+
+        fresh_topics = [(tid, turl) for tid, turl in topics_with_id if tid > last_topic_id]
+        if not fresh_topics:
+            print("⏩ No new topics since last scrape.")
+            return
+
+        # Process oldest->newest so channel order stays natural.
+        fresh_topics.sort(key=lambda x: x[0])
+        
+        for topic_id, topic_url in fresh_topics:
             await asyncio.sleep(random.uniform(2, 4))
             try:
                 topic_html = scraper.get(topic_url, timeout=30).text
@@ -129,5 +166,8 @@ async def tmv_scraper(user: Client):
             except Exception as topic_error:
                 print(f"⚠️ Failed topic {topic_url}: {topic_error}")
                 continue
+
+        await set_last_topic_id(highest_topic_id)
+        print(f"✅ Updated checkpoint to topic id {highest_topic_id}.")
     except Exception as e:
         print(f"🛑 Error: {e}")
