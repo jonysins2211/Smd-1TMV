@@ -127,19 +127,22 @@ async def tmv_scraper(user: Client):
         # Process oldest->newest so channel order stays natural.
         fresh_topics.sort(key=lambda x: x[0])
         
+        checkpoint_candidate = last_topic_id
+        checkpoint_blocked = False
+
         for topic_id, topic_url in fresh_topics:
             await asyncio.sleep(random.uniform(2, 4))
             try:
                 topic_html = scraper.get(topic_url, timeout=30).text
                 topic_soup = BeautifulSoup(topic_html, "html.parser")
                 posts = topic_soup.find_all("div", class_="cPost_contentWrap")
-                
+
                 for post in posts:
                     for a in post.find_all("a", href=True):
                         link_text = a.get_text(strip=True)
                         if "torrent" not in link_text.lower():
                             continue
-                            
+
                         href = fix_url(a["href"])
                         if await tmv_collection.find_one({"file_url": href}):
                             continue
@@ -161,13 +164,21 @@ async def tmv_scraper(user: Client):
                         if await asyncio.to_thread(download_file, scraper, href, filename):
                             print(f"✅ [{category}] Found: {link_text}")
                             await send_torrent(user, filename, category, link_text, href, href, size_mb)
-                            if os.path.exists(filename): os.remove(filename)
+                            if os.path.exists(filename):
+                                os.remove(filename)
+
+                if not checkpoint_blocked:
+                    checkpoint_candidate = topic_id
 
             except Exception as topic_error:
                 print(f"⚠️ Failed topic {topic_url}: {topic_error}")
+                checkpoint_blocked = True
                 continue
 
-        await set_last_topic_id(highest_topic_id)
-        print(f"✅ Updated checkpoint to topic id {highest_topic_id}.")
+        if checkpoint_candidate > last_topic_id:
+            await set_last_topic_id(checkpoint_candidate)
+            print(f"✅ Updated checkpoint to topic id {checkpoint_candidate}.")
+        elif checkpoint_blocked:
+            print(f"⚠️ Checkpoint remains at topic id {last_topic_id} due to topic failures.")
     except Exception as e:
         print(f"🛑 Error: {e}")
