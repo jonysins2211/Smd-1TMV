@@ -38,7 +38,7 @@ DATABASE_URL = os.getenv("DATABASE_URL", "") #Mongodb Url
 DATABASE_NAME = os.getenv("DATABASE_NAME", "") # example Cluster0
 
 # TamilMV settings
-TMV_URL = os.getenv("TMV_URL", "https://www.1tamilmv.immo/")
+TMV_URL = os.getenv("TMV_URL", "https://www.1tamilmv.gripe/")
 TMV_TORRENT = _get_int_env("TMV_TORRENT", -1003807443810)
 TMV_LEECH_GRP = _get_int_env("TMV_LEECH_GRP", -1002744205359)
 TMV_MIRROR_GRP = _get_int_env("TMV_MIRROR_GRP", -1003569007568)
