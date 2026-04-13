@@ -8,6 +8,9 @@ User = Client("User", api_id=API_ID, api_hash=API_HASH, session_string=USER_SESS
 
 # ---------- Keep-alive Ping ----------
 def ping_loop():
+    if not URL:
+        print("⚠️ URL not configured; keep-alive ping disabled.")
+        return
     while True:
         try:
             r = requests.get(URL, timeout=30)
@@ -42,6 +45,8 @@ async def start_server():
 
 # ---------- Startup ----------
 async def start_bot():
+    if not API_ID or not API_HASH or not USER_SESSION:
+        raise RuntimeError("Missing Telegram credentials: API_ID, API_HASH and USER_SESSION must be configured.")
     await User.start()
     user = await User.get_me()
     print(f"✅ User logged in: @{user.username}")
