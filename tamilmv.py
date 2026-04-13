@@ -18,7 +18,7 @@ if not os.path.exists(tmvthumb_path):
         if resp.status_code == 200:
             with open(tmvthumb_path, "wb") as f:
                 f.write(resp.content)
-    except:
+    except requests.RequestException:
         tmvthumb_path = None
 
 # ================= Utilities =================
@@ -52,7 +52,9 @@ def download_file(scraper, url: str, filename: str) -> bool:
                 for chunk in response.iter_content(chunk_size=8192):
                     f.write(chunk)
             return os.path.getsize(filename) > 0
-    except: return False
+    except (OSError, requests.RequestException):
+        return False
+    return False
 
 # ================= Telegram Upload =================
 async def send_torrent(user: Client, file_path, category, file_name, file_url, magnet, size_mb=0):
@@ -75,7 +77,7 @@ async def send_torrent(user: Client, file_path, category, file_name, file_url, m
     await safe_send(TMV_TORRENT)
     await safe_send(TMV_LEECH_GRP, reply_cmd="/qbleech")
     await safe_send(TMV_MIRROR_GRP, reply_cmd="/qbmirror")
-    await add_tmv(file_name, file_url, magnet, size_mb)
+    await add_tmv(file_name, file_url, magnet, size_mb, category)
 
 # ================= TamilMV Scraper =================
 async def tmv_scraper(user: Client):
@@ -123,6 +125,8 @@ async def tmv_scraper(user: Client):
                             await send_torrent(user, filename, category, link_text, href, href, size_mb)
                             if os.path.exists(filename): os.remove(filename)
 
-            except: continue
+            except Exception as topic_error:
+                print(f"⚠️ Failed topic {topic_url}: {topic_error}")
+                continue
     except Exception as e:
         print(f"🛑 Error: {e}")
